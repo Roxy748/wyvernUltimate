@@ -1,5 +1,5 @@
 -- // KEY CONFIGURATION //
-local correctKey = "Wyvern"
+local correctKey = "Wyvren"
 local keyLink = "https://discord.gg/HHyvyWDy3a"
 
 -- // KEY SYSTEM INTERFACE //
@@ -11,11 +11,11 @@ local VerifyBtn = Instance.new("TextButton")
 local GetKeyBtn = Instance.new("TextButton")
 
 ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.Name = "KeySystemWyvern"
+ScreenGui.Name = "KeySystemWyvren"
 
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(8, 18, 65)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 40, 120)
 MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
 MainFrame.Size = UDim2.new(0, 250, 0, 150)
@@ -24,29 +24,29 @@ MainFrame.Draggable = true
 
 Title.Parent = MainFrame
 Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "Wyvern | KEY SYSTEM"
+Title.Text = "Wyvren | KEY SYSTEM"
 Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundColor3 = Color3.fromRGB(12, 28, 110)
+Title.BackgroundColor3 = Color3.fromRGB(30, 60, 180)
 
 KeyInput.Parent = MainFrame
 KeyInput.PlaceholderText = "Enter Key here..."
 KeyInput.Size = UDim2.new(0, 200, 0, 30)
 KeyInput.Position = UDim2.new(0.5, -100, 0.4, 0)
-KeyInput.BackgroundColor3 = Color3.fromRGB(10, 22, 85)
+KeyInput.BackgroundColor3 = Color3.fromRGB(25, 50, 140)
 KeyInput.TextColor3 = Color3.new(1, 1, 1)
 
 VerifyBtn.Parent = MainFrame
 VerifyBtn.Text = "Verify"
 VerifyBtn.Size = UDim2.new(0, 90, 0, 30)
 VerifyBtn.Position = UDim2.new(0.1, 0, 0.7, 0)
-VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
+VerifyBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
 VerifyBtn.TextColor3 = Color3.new(1, 1, 1)
 
 GetKeyBtn.Parent = MainFrame
 GetKeyBtn.Text = "Get Key"
 GetKeyBtn.Size = UDim2.new(0, 90, 0, 30)
 GetKeyBtn.Position = UDim2.new(0.55, 0, 0.7, 0)
-GetKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 95, 210)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(0, 80, 200)
 GetKeyBtn.TextColor3 = Color3.new(1, 1, 1)
 
 -- // KEY FUNCTIONS //
@@ -110,44 +110,6 @@ local Success, Library = pcall(function()
             Prediction = false,
             PredictionAmount = 0.142
     }
-SilentAim = {
-    Enabled = false,
-    HitChance = 100,
-    TeamCheck = false,
-    VisibleCheck = false,
-    AimPart = "Head"
-},
-Page : Groupbox("Silent Aim", "Left") : AddToggle({
-                                                                            Title = "Enable Silent Aim",
-                                                                            Default = false,
-                                                                            Callback = function(v) Aimbot.SilentAim.Enabled = v end
-                                                                            })
-
-                                                                        Page : Groupbox("Silent Aim", "Left") : AddDropdown({
-                                                                            Title = "Aim Part",
-                                                                            Values = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"},
-                                                                            Default = "Head",
-                                                                            Callback = function(v) Aimbot.SilentAim.AimPart = v end
-                                                                            })
-
-                                                                        Page : Groupbox("Silent Aim", "Left") : AddSlider({
-                                                                            Title = "Hit Chance %",
-                                                                            Min = 1, Max = 100, Default = 100,
-                                                                            Suffix = "%",
-                                                                            Callback = function(v) Aimbot.SilentAim.HitChance = v end
-                                                                            })
-
-                                                                        Page : Groupbox("Silent Aim", "Left") : AddToggle({
-                                                                            Title = "Team Check",
-                                                                            Default = false,
-                                                                            Callback = function(v) Aimbot.SilentAim.TeamCheck = v end
-                                                                            })
-
-                                                                        Page : Groupbox("Silent Aim", "Left") : AddToggle({
-                                                                            Title = "Visible Check",
-                                                                            Default = false,
-                                                                            Callback = function(v) Aimbot.SilentAim.VisibleCheck = v end
-                                                                            })
 
         local ESP_Cache = {}
 
@@ -321,7 +283,7 @@ Page : Groupbox("Silent Aim", "Left") : AddToggle({
                                 for _, Plr in ipairs(Players : GetPlayers()) do if Plr ~= LocalPlayer then CreateESP(Plr) end end
 
                                     local FOV_ScreenGui = Instance.new("ScreenGui")
-                                    FOV_ScreenGui.Name = "Wyvern_FOV"
+                                    FOV_ScreenGui.Name = "Wyvren_FOV"
                                     FOV_ScreenGui.ResetOnSpawn = false
                                     FOV_ScreenGui.IgnoreGuiInset = true
                                     FOV_ScreenGui.DisplayOrder = 9999
@@ -407,15 +369,15 @@ Page : Groupbox("Silent Aim", "Left") : AddToggle({
                                                                                     end
                                                                                     end)
 
-                                                                        Library : Watermark("Wyvern Pro | Edit By Roxy")
-                                                                        local Window = Library : Window("Wyvern Pro")
-                                                                        Library.Theme.Accent = Color3.fromRGB(0, 150, 255)
-                                                                        Library:UpdateTheme("Background", Color3.fromRGB(5, 15, 55))
-                                                                        Library:UpdateTheme("Sidebar", Color3.fromRGB(8, 22, 85))
-                                                                        Library:UpdateTheme("Groupbox", Color3.fromRGB(12, 30, 100))
-                                                                        Library:UpdateTheme("Text", Color3.fromRGB(200, 220, 255))
-                                                                        Library:UpdateTheme("TextDark", Color3.fromRGB(140, 170, 230))
-                                                                        Library:UpdateTheme("Outline", Color3.fromRGB(0, 100, 230))
+                                                                        Library : Watermark("Wyvren Pro | Edit By Roxy")
+                                                                        local Window = Library : Window("Wyvren Pro")
+                                                                        Library.Theme.Accent = Color3.fromRGB(0, 120, 255)
+                                                                        Library : UpdateTheme("Background", Color3.fromRGB(10, 15, 40))
+                                                                        Library : UpdateTheme("Sidebar", Color3.fromRGB(15, 25, 70))
+                                                                        Library : UpdateTheme("Groupbox", Color3.fromRGB(20, 30, 90))
+                                                                        Library : UpdateTheme("Text", Color3.fromRGB(255, 255, 255))
+                                                                        Library : UpdateTheme("TextDark", Color3.fromRGB(180, 200, 255))
+                                                                        Library : UpdateTheme("Outline", Color3.fromRGB(0, 80, 200))
 
                                                                         Window : Section("Main")
 
