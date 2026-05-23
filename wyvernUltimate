@@ -55,7 +55,7 @@ local function StartScript()
 ScreenGui:Destroy()
 
 --[START OF ORIGINAL SCRIPT]
-local LibraryUrl = "https://github.com/Roxy859/Vovabro46/blob/main/RoxyMain"
+local LibraryUrl = "https://raw.githubusercontent.com/Roxy859/Vovabro46/main/RoxyMain"
 local Success, Library = pcall(function()
     return loadstring(game:HttpGet(LibraryUrl))()
     end)
