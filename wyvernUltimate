@@ -54,7 +54,7 @@ local function StartScript()
 ScreenGui:Destroy()
 
 --[START OF ORIGINAL SCRIPT]
-local LibraryUrl = "https://raw.githubusercontent.com/Roxy859/Vovabro46/main/RoxyMain"
+local LibraryUrl = "https://raw.githubusercontent.com/Vovabro46/trash/refs/heads/main/Test.lua"
 local Success, Library = pcall(function()
     return loadstring(game:HttpGet(LibraryUrl))()
     end)
@@ -685,3 +685,237 @@ local Success, Library = pcall(function()
                                                                                     wait(2)
                                                                                     GetKeyBtn.Text = "Get Key"
                                                                                     end)
+--[[
+    ROXY SILENT AIM - HIGH FOV OPTIMIZED
+    - 200+ FOV hasar kaydı iyileştirmesi
+    - Hitbox Expansion (Hedef alanını genişletme)
+    - Anti-Detection Bypass
+]]
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local function getClosestPlayerToCursor()
+    local character = localPlayer.Character
+    if not character then return nil end
+    local mousePos = UserInputService:GetMouseLocation()
+    local closestPart = nil
+    local closestScreenDist = math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local root = player.Character:FindFirstChild("HumanoidRootPart")
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            if root and hum and hum.Health > 0 then
+                local screenPoint = camera:WorldToScreenPoint(root.Position)
+                if screenPoint.Z > 0 then
+                    local screenPos = Vector2.new(screenPoint.X, screenPoint.Y)
+                    local dist = (screenPos - mousePos).Magnitude
+                    if dist < closestScreenDist then
+                        closestScreenDist = dist
+                        closestPart = root
+                    end
+                end
+            end
+        end
+    end
+    return closestPart
+end
+local BulletHandler = require(game:GetService("ReplicatedStorage").ModuleScripts.GunModules.BulletHandler)
+local oldFire = BulletHandler.Fire
+BulletHandler.Fire = function(p6)
+    local closestRoot = getClosestPlayerToCursor()
+    if closestRoot then
+        local origin = p6.Origin
+        local newDirection = (closestRoot.Position - origin).Unit
+        p6.Direction = newDirection
+    end
+    return oldFire(p6)
+end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+local RoxyConfig = {
+    Enabled = true,
+    Fov = 400, -- İstediğin yüksek değer
+    TargetPart = "Head",
+    WallCheck = true,
+    HitChance = 100,
+    Smoothness = 0.1 -- Sunucu kontrolünü atlatmak için hafif yumuşatma
+}
+
+-- FOV ÇEMBERİ
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1
+FOVCircle.Color = Color3.fromRGB(0, 255, 255)
+FOVCircle.Visible = true
+
+-- DUVAR KONTROLÜ (Gelişmiş)
+local function IsVisible(part)
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    local ray = workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position).Unit * 1000, rayParams)
+    return ray == nil or ray.Instance:IsDescendantOf(part.Parent)
+end
+
+-- EN YAKIN HEDEFİ BUL (Yüksek FOV için optimize edildi)
+local function GetClosest()
+    local target = nil
+    local shortestDist = RoxyConfig.Fov
+    
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            -- Sadece tek bir part yerine en yakın partı seçme (Multipoint mantığı)
+            local root = p.Character:FindFirstChild(RoxyConfig.TargetPart) or p.Character:FindFirstChild("HumanoidRootPart")
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            
+            if root and hum and hum.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToScreenPoint(root.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+                    if dist < shortestDist then
+                        if not RoxyConfig.WallCheck or IsVisible(root) then
+                            shortestDist = dist
+                            target = root
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- MERMİ SİSTEMİNE SIZMA (HASAR KAYDI ODAKLI)
+local success, BulletModule = pcall(function()
+    return require(game:GetService("ReplicatedStorage").ModuleScripts.GunModules.BulletHandler)
+end)
+
+if success and BulletModule then
+    local oldFire = BulletModule.Fire
+    BulletModule.Fire = function(obj)
+        local target = GetClosest()
+        if target and RoxyConfig.Enabled then
+
+        local function triggerBotCheck()
+    if not Config.TriggerBot or not Config.AutoShoot then return false end
+    local character = localPlayer.Character
+    if not character then return false end
+    
+    local mousePos = UserInputService:GetMouseLocation()
+    local mouseRay = camera:ScreenPointToRay(mousePos.X, mousePos.Y)
+    local hit, hitPos = workspace:FindPartOnRay(mouseRay, localPlayer.Character)
+    
+    if hit then
+        local parent = hit.Parent
+        if parent then
+            local humanoid = parent:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                local player = Players:GetPlayerFromCharacter(parent)
+                if player and player ~= localPlayer then
+                    local head = parent:FindFirstChild("Head")
+                    if head and hit == head then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+            -- Mermi yönünü sunucuyu şüphelendirmeyecek kadar (clamped) yönlendir
+            local origin = obj.Origin or Camera.CFrame.Position
+            local direction = (target.Position - origin).Unit
+            
+            obj.Direction = direction
+            
+            -- Ekstra Veri Manipülasyonu (Hasar kaydı için kritik)
+            if obj.TargetData then
+                obj.TargetData.Target = target
+                obj.TargetData.Hit = target.Position
+            end
+            
+            -- Bazı oyunlarda merminin hızıyla oynamak kaydı artırır
+            if obj.Velocity then
+                obj.Velocity = direction * obj.Velocity.Magnitude
+            end
+        end
+        return oldFire(obj)
+    end
+end
+
+-- DÖNGÜ
+game:GetService("RunService").RenderStepped:Connect(function()
+    FOVCircle.Radius = RoxyConfig.Fov
+    FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
+end)
+local function isAlive(player)
+    local char = player.Character
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    return hum and hum.Health > 0 and hum.Parent ~= nil
+end
+
+local function getTargetPart(character)
+    if Config.TargetPart == "Head" then
+        local head = character:FindFirstChild("Head")
+        if head then return head end
+    elseif Config.TargetPart == "HumanoidRootPart" then
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if root then return root end
+    elseif Config.TargetPart == "Random" then
+        local parts = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}
+        for _, partName in ipairs(parts) do
+            local part = character:FindFirstChild(partName)
+            if part then return part end
+        end
+    end
+    return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head")
+end
+local function checkHitchance()
+    if Config.Hitchance >= 100 then return true end
+    local random = math.random(1, 100)
+    return random <= Config.Hitchance
+end
+local function isVisible(origin, targetPos)
+    if not Config.VisCheck then return true end
+    
+    local direction = (targetPos - origin).Unit
+    local distance = (targetPos - origin).Magnitude
+    local ray = Ray.new(origin, direction * distance)
+    
+    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {localPlayer.Character, camera})
+    
+    if hit then
+        local distToTarget = distance
+        local distToHit = (position - origin).Magnitude
+        
+        if distToHit >= distToTarget - 2 then
+            return true -- Direk görüş var
+        end
+        
+        -- Wallbang kontrolü
+        if Config.Wallbang then
+            local hitParent = hit.Parent
+            if hitParent then
+                -- Oyuncuya ait bir şey değilse duvar/eşya demektir
+                local hitPlayer = Players:GetPlayerFromCharacter(hitParent)
+                if not hitPlayer then
+                    -- Duvar/engel varsa yine de vur (wallbang)
+                    -- Penetration kontrolü: material kontrolü yapabilirsin
+                    local material = hit.Material
+                    if material and material ~= Enum.Material.Water then
+                        return true
+                    end
+                end
+            end
+        end
+        
+        return false -- Görüş yok ve wallbang kapalı
+    end
+    
+    return true
+end
