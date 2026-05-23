@@ -896,18 +896,6 @@ local function isVisible(origin, targetPos)
         if distToHit >= distToTarget - 2 then
             return true -- Direk görüş var
         end
--- H Tuşu ile Aç/Kapa
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.H then
-        RoxyConfig.Enabled = not RoxyConfig.Enabled
-        if RoxyConfig.Enabled then
-            FOVCircle.Color = Color3.fromRGB(0, 255, 255)
-            print("[+] Silent Aim AKTIF - H ile kapat")
-        else
-            FOVCircle.Color = Color3.fromRGB(255, 0, 0)
-            print("[-] Silent Aim DEVRE DISI - H ile ac")
-        
         -- Wallbang kontrolü
         if Config.Wallbang then
             local hitParent = hit.Parent
