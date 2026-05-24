@@ -686,98 +686,154 @@ local Success, Library = pcall(function()
                                                                                     GetKeyBtn.Text = "Get Key"
                                                                                     end)
 --[[
-    ROXY SILENT AIM - HIGH FOV OPTIMIZED
-    - 200+ FOV hasar kaydı iyileştirmesi
-    - Hitbox Expansion (Hedef alanını genişletme)
-    - Anti-Detection Bypass
+    ROXY SILENT AIM v3 - FINAL
+    - H Tuşu ile Aç/Kapat
+    - Sadece FOV çizgisi (içi boş)
+    - SILENT AIM [ON/OFF] - H yazısı
+    - Status text'e tıklayınca aç/kapat
+    - Sağ üst köşede
+    - NewA4.Absorbing hook eklendi (Flick)
 ]]
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local localPlayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local function getClosestPlayerToCursor()
-    local character = localPlayer.Character
-    if not character then return nil end
-    local mousePos = UserInputService:GetMouseLocation()
-    local closestPart = nil
-    local closestScreenDist = math.huge
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer and player.Character then
-            local root = player.Character:FindFirstChild("HumanoidRootPart")
-            local hum = player.Character:FindFirstChildOfClass("Humanoid")
-            if root and hum and hum.Health > 0 then
-                local screenPoint = camera:WorldToScreenPoint(root.Position)
-                if screenPoint.Z > 0 then
-                    local screenPos = Vector2.new(screenPoint.X, screenPoint.Y)
-                    local dist = (screenPos - mousePos).Magnitude
-                    if dist < closestScreenDist then
-                        closestScreenDist = dist
-                        closestPart = root
-                    end
-                end
-            end
-        end
-    end
-    return closestPart
-end
-local BulletHandler = require(game:GetService("ReplicatedStorage").ModuleScripts.GunModules.BulletHandler)
-local oldFire = BulletHandler.Fire
-BulletHandler.Fire = function(p6)
-    local closestRoot = getClosestPlayerToCursor()
-    if closestRoot then
-        local origin = p6.Origin
-        local newDirection = (closestRoot.Position - origin).Unit
-        p6.Direction = newDirection
-    end
-    return oldFire(p6)
-end
 
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
-local RoxyConfig = {
-    Enabled = true,
-    Fov = 400, -- İstediğin yüksek değer
+-------------------- CONFIG --------------------
+local Config = {
+    Enabled = false,
+    Fov = 400,
     TargetPart = "Head",
     WallCheck = true,
-    HitChance = 100,
-    Smoothness = 0.1 -- Sunucu kontrolünü atlatmak için hafif yumuşatma
+    ToggleKey = Enum.KeyCode.H,
+    FovColor = Color3.fromRGB(0, 255, 255),
 }
+------------------------------------------------
 
--- FOV ÇEMBERİ
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 1
-FOVCircle.Color = Color3.fromRGB(0, 255, 255)
-FOVCircle.Visible = true
+-------------------- FOV (SADECE ÇİZGİ - İÇİ BOŞ) --------------------
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SilentAimFov"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.Parent = CoreGui
 
--- DUVAR KONTROLÜ (Gelişmiş)
-local function IsVisible(part)
+local fovFrame = Instance.new("Frame")
+fovFrame.Name = "FovCircle"
+fovFrame.Size = UDim2.new(0, Config.Fov * 2, 0, Config.Fov * 2)
+fovFrame.Position = UDim2.new(0.5, -Config.Fov, 0.5, -Config.Fov)
+fovFrame.BackgroundTransparency = 1
+fovFrame.BorderSizePixel = 0
+fovFrame.Visible = Config.Enabled
+fovFrame.Parent = screenGui
+
+local fovStroke = Instance.new("UIStroke")
+fovStroke.Thickness = 2
+fovStroke.Color = Config.FovColor
+fovStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+fovStroke.Parent = fovFrame
+
+local fovCorner = Instance.new("UICorner")
+fovCorner.CornerRadius = UDim.new(1, 0)
+fovCorner.Parent = fovFrame
+
+local function UpdateFov()
+    if Config.Enabled then
+        fovFrame.Position = UDim2.new(0, Mouse.X - Config.Fov, 0, Mouse.Y - Config.Fov)
+    end
+end
+---------------------------------------------------------
+
+-------------------- STATUS TEXT (SAĞ ÜST) --------------------
+local statusLabel = Instance.new("TextButton")
+statusLabel.Name = "StatusText"
+statusLabel.Size = UDim2.new(0, 220, 0, 28)
+statusLabel.Position = UDim2.new(1, -240, 0, 12)
+statusLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+statusLabel.BackgroundTransparency = 0.3
+statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+statusLabel.Text = "SILENT AIM [OFF] — [H]"
+statusLabel.TextSize = 18
+statusLabel.Font = Enum.Font.SourceSansBold
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.BorderSizePixel = 0
+statusLabel.Parent = screenGui
+
+local statusCorner = Instance.new("UICorner")
+statusCorner.CornerRadius = UDim.new(0, 4)
+statusCorner.Parent = statusLabel
+-----------------------------------------------------------
+
+-------------------- TOGGLE FONKSIYONU --------------------
+local function ToggleAim()
+    Config.Enabled = not Config.Enabled
+    
+    fovFrame.Visible = Config.Enabled
+    
+    if Config.Enabled then
+        statusLabel.Text = "SILENT AIM [ON] — [H]"
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 50)
+    else
+        statusLabel.Text = "SILENT AIM [OFF] — [H]"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+    
+    print("[SILENT AIM] " .. (Config.Enabled and "ON" or "OFF"))
+end
+-----------------------------------------------------------
+
+-------------------- H TUŞU ILE TOGGLE --------------------
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Config.ToggleKey then
+        ToggleAim()
+    end
+end)
+-----------------------------------------------------------
+
+-------------------- STATUS'E TIKLAYINCA TOGGLE --------------------
+statusLabel.MouseButton1Click:Connect(function()
+    ToggleAim()
+end)
+-------------------------------------------------------------------
+
+-------------------- VISIBILITY CHECK --------------------
+local function IsVisible(targetPart)
+    if not Config.WallCheck then return true end
+    
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin).Unit * 1000
+    
     local rayParams = RaycastParams.new()
     rayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
     rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    local ray = workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position).Unit * 1000, rayParams)
-    return ray == nil or ray.Instance:IsDescendantOf(part.Parent)
-end
-
--- EN YAKIN HEDEFİ BUL (Yüksek FOV için optimize edildi)
-local function GetClosest()
-    local target = nil
-    local shortestDist = RoxyConfig.Fov
     
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            -- Sadece tek bir part yerine en yakın partı seçme (Multipoint mantığı)
-            local root = p.Character:FindFirstChild(RoxyConfig.TargetPart) or p.Character:FindFirstChild("HumanoidRootPart")
-            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+    local ray = workspace:Raycast(origin, direction, rayParams)
+    if not ray then return true end
+    
+    local hitPlayer = Players:GetPlayerFromCharacter(ray.Instance:FindFirstAncestorOfClass("Model"))
+    return hitPlayer ~= nil
+end
+----------------------------------------------------------
+
+-------------------- TARGET SELECTION --------------------
+local function GetClosestTargetPart()
+    local target = nil
+    local shortestDist = Config.Fov
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local root = player.Character:FindFirstChild(Config.TargetPart) or player.Character:FindFirstChild("HumanoidRootPart")
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
             
             if root and hum and hum.Health > 0 then
                 local screenPos, onScreen = Camera:WorldToScreenPoint(root.Position)
                 if onScreen then
                     local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
                     if dist < shortestDist then
-                        if not RoxyConfig.WallCheck or IsVisible(root) then
+                        if IsVisible(root) then
                             shortestDist = dist
                             target = root
                         end
@@ -789,132 +845,146 @@ local function GetClosest()
     return target
 end
 
--- MERMİ SİSTEMİNE SIZMA (HASAR KAYDI ODAKLI)
-local success, BulletModule = pcall(function()
-    return require(game:GetService("ReplicatedStorage").ModuleScripts.GunModules.BulletHandler)
-end)
-
-if success and BulletModule then
-    local oldFire = BulletModule.Fire
-    BulletModule.Fire = function(obj)
-        local target = GetClosest()
-        if target and RoxyConfig.Enabled then
-
-        local function triggerBotCheck()
-    if not Config.TriggerBot or not Config.AutoShoot then return false end
-    local character = localPlayer.Character
-    if not character then return false end
-    
-    local mousePos = UserInputService:GetMouseLocation()
-    local mouseRay = camera:ScreenPointToRay(mousePos.X, mousePos.Y)
-    local hit, hitPos = workspace:FindPartOnRay(mouseRay, localPlayer.Character)
-    
-    if hit then
-        local parent = hit.Parent
-        if parent then
-            local humanoid = parent:FindFirstChildOfClass("Humanoid")
-            if humanoid and humanoid.Health > 0 then
-                local player = Players:GetPlayerFromCharacter(parent)
-                if player and player ~= localPlayer then
-                    local head = parent:FindFirstChild("Head")
-                    if head and hit == head then
-                        return true
-                    end
-                end
-            end
-        end
+-- Ayrıca pozisyon olarak da döndüren fonksiyon
+local function GetClosestTarget()
+    local part = GetClosestTargetPart()
+    if part then
+        return part, part.Position
     end
-    return false
+    return nil, nil
 end
-            -- Mermi yönünü sunucuyu şüphelendirmeyecek kadar (clamped) yönlendir
-            local origin = obj.Origin or Camera.CFrame.Position
-            local direction = (target.Position - origin).Unit
-            
-            obj.Direction = direction
-            
-            -- Ekstra Veri Manipülasyonu (Hasar kaydı için kritik)
-            if obj.TargetData then
-                obj.TargetData.Target = target
-                obj.TargetData.Hit = target.Position
-            end
-            
-            -- Bazı oyunlarda merminin hızıyla oynamak kaydı artırır
-            if obj.Velocity then
-                obj.Velocity = direction * obj.Velocity.Magnitude
-            end
-        end
-        return oldFire(obj)
-    end
-end
+----------------------------------------------------------
 
--- DÖNGÜ
-game:GetService("RunService").RenderStepped:Connect(function()
-    FOVCircle.Radius = RoxyConfig.Fov
-    FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
-end)
-local function isAlive(player)
-    local char = player.Character
-    if not char then return false end
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    return hum and hum.Health > 0 and hum.Parent ~= nil
-end
-
-local function getTargetPart(character)
-    if Config.TargetPart == "Head" then
-        local head = character:FindFirstChild("Head")
-        if head then return head end
-    elseif Config.TargetPart == "HumanoidRootPart" then
-        local root = character:FindFirstChild("HumanoidRootPart")
-        if root then return root end
-    elseif Config.TargetPart == "Random" then
-        local parts = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}
-        for _, partName in ipairs(parts) do
-            local part = character:FindFirstChild(partName)
-            if part then return part end
-        end
-    end
-    return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head")
-end
-local function checkHitchance()
-    if Config.Hitchance >= 100 then return true end
-    local random = math.random(1, 100)
-    return random <= Config.Hitchance
-end
-local function isVisible(origin, targetPos)
-    if not Config.VisCheck then return true end
+-------------------- NEWA4.ABSORBING HOOK --------------------
+local function HookAbsorbing()
+    local success, module = pcall(function()
+        return require(game:GetService("ReplicatedStorage").Models.NewA4.Absorbing)
+    end)
     
-    local direction = (targetPos - origin).Unit
-    local distance = (targetPos - origin).Magnitude
-    local ray = Ray.new(origin, direction * distance)
-    
-    local hit, position = workspace:FindPartOnRayWithIgnoreList(ray, {localPlayer.Character, camera})
-    
-    if hit then
-        local distToTarget = distance
-        local distToHit = (position - origin).Magnitude
+    if success and type(module) == "table" then
+        print("[SILENT AIM] Absorbing module bulundu! İçindeki fonksiyonlar taranıyor...")
         
-        if distToHit >= distToTarget - 2 then
-            return true -- Direk görüş var
-        end
-        -- Wallbang kontrolü
-        if Config.Wallbang then
-            local hitParent = hit.Parent
-            if hitParent then
-                -- Oyuncuya ait bir şey değilse duvar/eşya demektir
-                local hitPlayer = Players:GetPlayerFromCharacter(hitParent)
-                if not hitPlayer then
-                    -- Duvar/engel varsa yine de vur (wallbang)
-                    -- Penetration kontrolü: material kontrolü yapabilirsin
-                    local material = hit.Material
-                    if material and material ~= Enum.Material.Water then
-                        return true
+        -- Modüldeki tüm fonksiyonları tara
+        for key, value in pairs(module) do
+            if type(value) == "function" then
+                local oldFunc = value
+                module[key] = function(self, ...)
+                    if Config.Enabled then
+                        local target, targetPos = GetClosestTarget()
+                        if target then
+                            -- Argümanları kontrol et ve hedefi değiştir
+                            local args = {...}
+                            -- Eğer ilk argüman bir Vector3 (pozisyon) ise
+                            if #args > 0 then
+                                if type(args[1]) == "userdata" and pcall(function() return args[1].X end) then
+                                    args[1] = targetPos
+                                end
+                                if #args > 1 and type(args[2]) == "userdata" and pcall(function() return args[2].X end) then
+                                    args[2] = targetPos
+                                end
+                            end
+                            return oldFunc(self, unpack(args))
+                        end
+                    end
+                    return oldFunc(self, ...)
+                end
+                print("[SILENT AIM] Hooklandı:", tostring(key))
+            elseif type(value) == "table" then
+                -- İç içe tabloları da tara (Fire, Shoot vb.)
+                for subKey, subValue in pairs(value) do
+                    if type(subValue) == "function" then
+                        local oldSubFunc = subValue
+                        value[subKey] = function(self, ...)
+                            if Config.Enabled then
+                                local target, targetPos = GetClosestTarget()
+                                if target then
+                                    local args = {...}
+                                    if #args > 0 then
+                                        if type(args[1]) == "userdata" and pcall(function() return args[1].X end) then
+                                            args[1] = targetPos
+                                        end
+                                        if #args > 1 and type(args[2]) == "userdata" and pcall(function() return args[2].X end) then
+                                            args[2] = targetPos
+                                        end
+                                    end
+                                    return oldSubFunc(self, unpack(args))
+                                end
+                            end
+                            return oldSubFunc(self, ...)
+                        end
+                        print("[SILENT AIM] Alt fonksiyon hooklandı:", tostring(key) .. "." .. tostring(subKey))
                     end
                 end
             end
         end
         
-        return false -- Görüş yok ve wallbang kapalı
+        print("[SILENT AIM] Absorbing hook tamamlandı!")
+    else
+        print("[SILENT AIM] Absorbing module bulunamadı veya yüklenemedi. 5 saniye sonra tekrar denenecek...")
+        spawn(function()
+            wait(5)
+            HookAbsorbing()
+        end)
     end
-    
-    return true
 end
+----------------------------------------------------------
+
+-------------------- BULBOT HOOK (Genel) --------------------
+local function HookAllBulletModules()
+    local containers = {
+        game:GetService("ReplicatedStorage"),
+        game:GetService("ServerStorage"),
+        LocalPlayer:WaitForChild("Backpack"),
+        LocalPlayer.PlayerScripts,
+        game:GetService("StarterPlayer").StarterPlayerScripts,
+    }
+    
+    for _, container in ipairs(containers) do
+        if container then
+            pcall(function()
+                for _, obj in ipairs(container:GetDescendants()) do
+                    if obj:IsA("ModuleScript") then
+                        local name = obj.Name:lower()
+                        if name:find("bullet") or name:find("shoot") or name:find("fire") or name:find("gun") or name:find("weapon") then
+                            local success, module = pcall(function() return require(obj) end)
+                            if success and type(module) == "table" and module.Fire then
+                                local oldFire = module.Fire
+                                module.Fire = function(self, ...)
+                                    if Config.Enabled then
+                                        local target = GetClosestTargetPart()
+                                        if target then
+                                            local origin = self.Origin or Camera.CFrame.Position
+                                            self.Direction = (target.Position - origin).Unit
+                                            
+                                            if self.TargetData then
+                                                self.TargetData.Target = target
+                                                self.TargetData.Hit = target.Position
+                                            end
+                                        end
+                                    end
+                                    return oldFire(self, ...)
+                                end
+                                print("[SILENT AIM] Hooked:", obj:GetFullName())
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end
+----------------------------------------------------------
+
+-------------------- BAŞLATMA --------------------
+spawn(function()
+    wait(2)
+    HookAllBulletModules()
+    HookAbsorbing() -- NewA4.Absorbing modülünü hookla
+end)
+----------------------------------------------------------
+
+-------------------- LOOP --------------------
+RunService.RenderStepped:Connect(UpdateFov)
+------------------------------------------------
+
+print("[SILENT AIM v3 - Flick] Loaded. Press H or click the text to toggle")
